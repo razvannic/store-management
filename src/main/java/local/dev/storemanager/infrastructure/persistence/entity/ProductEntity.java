@@ -1,4 +1,4 @@
-package local.dev.storemanager.infrastructure.persistence;
+package local.dev.storemanager.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
