@@ -2,7 +2,7 @@ package local.dev.storemanager.application.mapper;
 
 import local.dev.storemanager.application.dto.ProductDto;
 import local.dev.storemanager.domain.model.Product;
-import local.dev.storemanager.infrastructure.persistence.ProductEntity;
+import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.springframework.stereotype.Component;
 
 @Component

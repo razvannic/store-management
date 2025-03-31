@@ -1,4 +1,4 @@
-package local.dev.storemanager.application.service;
+package local.dev.storemanager.application.service.product;
 
 import local.dev.storemanager.application.dto.ProductDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
@@ -20,7 +20,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(ProductDto dto) {
-        Product product = productMapper.toDomain(dto);
+        final var product = productMapper.toDomain(dto);
         productRepository.save(product);
     }
 }

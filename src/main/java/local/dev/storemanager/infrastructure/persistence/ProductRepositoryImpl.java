@@ -4,6 +4,7 @@ package local.dev.storemanager.infrastructure.persistence;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
+import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -19,8 +20,8 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Product save(Product product) {
-        ProductEntity entity = mapper.toEntity(product);
-        ProductEntity saved = jpaRepository.save(entity);
+        final var entity = mapper.toEntity(product);
+        final var saved = jpaRepository.save(entity);
         return mapper.toDomain(saved);
     }
 }

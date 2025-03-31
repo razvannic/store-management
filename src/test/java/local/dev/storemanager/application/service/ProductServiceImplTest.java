@@ -2,6 +2,7 @@ package local.dev.storemanager.application.service;
 
 import local.dev.storemanager.application.dto.ProductDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
+import local.dev.storemanager.application.service.product.ProductServiceImpl;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,8 @@ class ProductServiceImplTest {
 
     @Test
     void addProduct_shouldConvertDtoAndSave() {
-        ProductDto dto = new ProductDto("Laptop", 19.99, 20);
-        Product product = Product.builder()
+        final var dto = new ProductDto("Laptop", 19.99, 20);
+        final var product = Product.builder()
                 .name("Laptop")
                 .price(19.99)
                 .quantity(20)
