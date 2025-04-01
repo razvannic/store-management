@@ -55,4 +55,8 @@ public class JwtUtil {
             return false;
         }
     }
+
+    public long getExpirationMillis() {
+        return expiration;
+    }
 }
