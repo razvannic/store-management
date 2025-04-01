@@ -17,8 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(AuthController.class)
 @ActiveProfiles("test")
@@ -33,6 +33,7 @@ class AuthControllerTest {
         public JwtUtil jwtUtil() {
             JwtUtil mock = Mockito.mock(JwtUtil.class);
             when(mock.generateToken("admin", "ROLE_ADMIN")).thenReturn("mocked-token");
+            when(mock.getExpirationMillis()).thenReturn(3600L);
             return mock;
         }
 
@@ -65,7 +66,9 @@ class AuthControllerTest {
                             { "username": "admin", "password": "admin" }
                         """))
                 .andExpect(status().isOk())
-                .andExpect(content().string("mocked-token"));
+                .andExpect(jsonPath("$.accessToken").value("mocked-token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(3600L));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package local.dev.storemanager.infrastructure.rest;
 
 import local.dev.storemanager.application.dto.LoginRequestDto;
+import local.dev.storemanager.application.dto.LoginResponseDto;
 import local.dev.storemanager.application.security.JwtUtil;
 import local.dev.storemanager.application.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
@@ -23,11 +24,16 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto request) {
         var role = authenticationService.resolveRole(request.username(), request.password());
         if (role != null) {
             final var token = jwtUtil.generateToken(request.username(), role);
-            return ResponseEntity.ok(token);
+            final var response = new LoginResponseDto(
+                    token,
+                    "Bearer",
+                    jwtUtil.getExpirationMillis()
+            );
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
     }
