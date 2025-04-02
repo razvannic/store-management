@@ -1,6 +1,6 @@
 package local.dev.storemanager.application.service.product;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
@@ -21,7 +21,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product addProduct(ProductDto dto) {
+    public Product addProduct(ProductRequestDto dto) {
         Product product = mapper.toDomain(dto);
         return productRepository.save(product);
     }
@@ -38,7 +38,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product updateProduct(Long id, ProductDto dto) {
+    public Product updateProduct(Long id, ProductRequestDto dto) {
         Product existing = findById(id);
         existing.setName(dto.name());
         existing.setPrice(dto.price());

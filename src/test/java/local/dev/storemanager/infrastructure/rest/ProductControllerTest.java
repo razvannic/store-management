@@ -1,6 +1,7 @@
 package local.dev.storemanager.infrastructure.rest;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
+import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.security.JwtRequestFilter;
 import local.dev.storemanager.domain.model.Product;
@@ -49,14 +50,12 @@ class ProductControllerTest {
     private ProductMapper productMapper;
 
     private Product product;
-    private ProductDto productDto;
 
     @BeforeEach
     void setup() {
         product = Product.builder().id(1L).name("Book").price(10.0).quantity(5).build();
-        productDto = new ProductDto("Book", 10.0, 5);
-
-        when(productMapper.toDto(any(Product.class))).thenReturn(productDto);
+        final var productResponseDto = new ProductResponseDto(12L, "Book", 10.0, 5);
+        when(productMapper.toResponseDto(any(Product.class))).thenReturn(productResponseDto);
     }
 
     @TestConfiguration
