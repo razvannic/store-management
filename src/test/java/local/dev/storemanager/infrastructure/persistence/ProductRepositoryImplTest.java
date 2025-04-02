@@ -1,6 +1,5 @@
 package local.dev.storemanager.infrastructure.persistence;
 
-import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
