@@ -150,7 +150,7 @@ class ProductControllerTest {
         when(productService.findById(999L)).thenThrow(new ProductNotFoundException(999L));
 
         mockMvc.perform(get("/products/999")
-                        .header("Authorization", "Bearer dummy-token") // if needed
+                        .header("Authorization", "Bearer dummy-token")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
