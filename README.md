@@ -247,13 +247,57 @@ spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=10s
 
 ---
 
+---
+
+## 🐘 Postgres Setup (MacOS)
+
+You can configure a local PostgreSQL instance to run the microservice in a real database environment instead of H2.
+
+### 🔧 Installation (via Homebrew)
+
+```bash
+brew install postgresql
+brew services start postgresql
+```
+
+Create the DB:
+```sql
+createdb storedb
+```
+
+Check it works:
+```sql
+psql storedb
+```
+
+Then run a sample query:
+```sql
+\dt       -- see tables
+SELECT * FROM products;
+```
+
+In the application-postgres.properties:
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/storedb
+spring.datasource.username=your_user
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+spring.profiles.active=postgres
+
+```
+
+---
+
 ## 🚀 How to Run
 
 ```bash
-# Default profile: uses H2
+# with default profile: uses H2
 ./mvnw spring-boot:run
 
-# With Postgres (if configured)
+# With Postgres
 SPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run
 ```
 
