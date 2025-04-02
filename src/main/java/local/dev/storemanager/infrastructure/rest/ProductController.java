@@ -1,5 +1,6 @@
 package local.dev.storemanager.infrastructure.rest;
 
+import jakarta.validation.Valid;
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
@@ -25,7 +26,7 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ProductResponseDto> addProduct(@RequestBody ProductRequestDto dto) {
+    public ResponseEntity<ProductResponseDto> addProduct(@RequestBody @Valid ProductRequestDto dto) {
         final var product = productService.addProduct(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponseDto(product));
     }
@@ -46,7 +47,7 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDto dto) {
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id, @RequestBody @Valid ProductRequestDto dto) {
         final var updated = productService.updateProduct(id, dto);
         return ResponseEntity.ok(productMapper.toResponseDto(updated));
     }

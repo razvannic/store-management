@@ -1,6 +1,7 @@
 package local.dev.storemanager.application.service.product;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
+import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
@@ -29,7 +30,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product findById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     @Override
