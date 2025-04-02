@@ -1,6 +1,6 @@
 package local.dev.storemanager.application.mapper;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class ProductMapperTest {
 
     @Test
     void shouldMapDtoToDomain() {
-        final var dto = new ProductDto("Laptop", 999.99, 2);
+        final var dto = new ProductRequestDto("Laptop", 999.99, 2);
         final var domain = mapper.toDomain(dto);
 
         assertEquals("Laptop", domain.getName());
@@ -52,7 +52,7 @@ class ProductMapperTest {
     @Test
     void shouldMapDomainToDto() {
         final var domain = Product.builder().id(30L).name("Headphones").price(150.0).quantity(7).build();
-        final var dto = mapper.toDto(domain);
+        final var dto = mapper.toResponseDto(domain);
 
         assertEquals("Headphones", dto.name());
         assertEquals(150.0, dto.price());

@@ -1,6 +1,7 @@
 package local.dev.storemanager.application.mapper;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
+import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.springframework.stereotype.Component;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductMapper {
 
-    public Product toDomain(ProductDto dto) {
+    public Product toDomain(ProductRequestDto dto) {
         return Product.builder()
                 .name(dto.name())
                 .price(dto.price())
@@ -34,8 +35,9 @@ public class ProductMapper {
                 .build();
     }
 
-    public ProductDto toDto(Product domain) {
-        return new ProductDto(
+    public ProductResponseDto toResponseDto(Product domain) {
+        return new ProductResponseDto(
+                domain.getId(),
                 domain.getName(),
                 domain.getPrice(),
                 domain.getQuantity()

@@ -1,6 +1,7 @@
 package local.dev.storemanager.infrastructure.rest;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
+import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.domain.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -24,30 +25,30 @@ public class ProductController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<ProductDto> addProduct(@RequestBody ProductDto dto) {
+    public ResponseEntity<ProductResponseDto> addProduct(@RequestBody ProductRequestDto dto) {
         final var product = productService.addProduct(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toDto(product));
+        return ResponseEntity.status(HttpStatus.CREATED).body(productMapper.toResponseDto(product));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable Long id) {
         final var product = productService.findById(id);
-        return ResponseEntity.ok(productMapper.toDto(product));
+        return ResponseEntity.ok(productMapper.toResponseDto(product));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
+    public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
         final var products = productService.findAll();
-        return ResponseEntity.ok(products.stream().map(productMapper::toDto).toList());
+        return ResponseEntity.ok(products.stream().map(productMapper::toResponseDto).toList());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @RequestBody ProductDto dto) {
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDto dto) {
         final var updated = productService.updateProduct(id, dto);
-        return ResponseEntity.ok(productMapper.toDto(updated));
+        return ResponseEntity.ok(productMapper.toResponseDto(updated));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

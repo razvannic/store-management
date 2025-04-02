@@ -107,6 +107,7 @@ class ProductIntegrationTest {
                                     }
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("Wireless Mouse"))
                 .andExpect(jsonPath("$.price").value(20.0))
                 .andExpect(jsonPath("$.quantity").value(5));

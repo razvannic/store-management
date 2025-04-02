@@ -1,6 +1,6 @@
 package local.dev.storemanager.application.service;
 
-import local.dev.storemanager.application.dto.ProductDto;
+import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.service.product.ProductServiceImpl;
 import local.dev.storemanager.domain.model.Product;
@@ -32,7 +32,7 @@ class ProductServiceImplTest {
 
     @Test
     void addProduct_shouldConvertDtoAndSave() {
-        final var dto = new ProductDto("Laptop", 19.99, 20);
+        final var dto = new ProductRequestDto("Laptop", 19.99, 20);
         final var product = Product.builder()
                 .name("Laptop")
                 .price(19.99)
@@ -90,7 +90,7 @@ class ProductServiceImplTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(productRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        final var dto = new ProductDto("New", 99.99, 10);
+        final var dto = new ProductRequestDto("New", 99.99, 10);
         final var updated = productService.updateProduct(1L, dto);
 
         assertEquals("New", updated.getName());
