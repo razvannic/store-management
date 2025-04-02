@@ -122,14 +122,12 @@ class ProductIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
-        final var resolved = assertThrows(Exception.class, () ->
-                mockMvc.perform(get("/products/" + saved.getId())
+        mockMvc.perform(get("/products/" + saved.getId())
                         .header("Authorization", "Bearer " + token))
-        );
-
-        assertTrue(resolved.getCause().getMessage().contains("Product not found"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Product with id " + saved.getId() + " was not found."));
     }
-
 
     @Test
     void shouldRejectUnauthorizedAccess() throws Exception {

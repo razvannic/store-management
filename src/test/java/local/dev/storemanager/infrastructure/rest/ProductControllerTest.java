@@ -1,7 +1,7 @@
 package local.dev.storemanager.infrastructure.rest;
 
-import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.dto.ProductResponseDto;
+import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.security.JwtRequestFilter;
 import local.dev.storemanager.domain.model.Product;
@@ -53,6 +53,7 @@ class ProductControllerTest {
 
     @BeforeEach
     void setup() {
+        reset(productService, productMapper);
         product = Product.builder().id(1L).name("Book").price(10.0).quantity(5).build();
         final var productResponseDto = new ProductResponseDto(12L, "Book", 10.0, 5);
         when(productMapper.toResponseDto(any(Product.class))).thenReturn(productResponseDto);
@@ -142,5 +143,78 @@ class ProductControllerTest {
 
         mockMvc.perform(delete("/products/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturn404WhenProductNotFound() throws Exception {
+        when(productService.findById(999L)).thenThrow(new ProductNotFoundException(999L));
+
+        mockMvc.perform(get("/products/999")
+                        .header("Authorization", "Bearer dummy-token") // if needed
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Product with id 999 was not found."));
+    }
+
+    @Test
+    void shouldReturn500WhenUnhandledExceptionOccurs() throws Exception {
+        when(productService.findById(1L)).thenThrow(new RuntimeException("Unexpected failure"));
+
+        mockMvc.perform(get("/products/1")
+                        .header("Authorization", "Bearer dummy-token"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                .andExpect(jsonPath("$.message").value("Unexpected failure"));
+    }
+
+    @Test
+    void shouldReturn400ForInvalidProductInput() throws Exception {
+        String invalidPayload = """
+        {
+            "name": "  ",
+            "price": -5,
+            "quantity": 0
+        }
+    """;
+
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidPayload)
+                        .header("Authorization", "Bearer dummy-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.messages").isArray())
+                .andExpect(jsonPath("$.messages[?(@.field == 'name')].message").value("Product name must not be blank"))
+                .andExpect(jsonPath("$.messages[?(@.field == 'price')].message").value("Price must be greater than 0"))
+                .andExpect(jsonPath("$.messages[?(@.field == 'quantity')].message").value("Quantity must be at least 1"));
+    }
+
+    @Test
+    void shouldReturn400ForInvalidProductInputOnUpdate() throws Exception {
+        String invalidPayload = """
+        {
+            "name": "  ",
+            "price": -5,
+            "quantity": 0
+        }
+    """;
+
+        when(productService.updateProduct(eq(1L), any())).thenReturn(product);
+
+        mockMvc.perform(put("/products/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidPayload)
+                        .header("Authorization", "Bearer dummy-token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.messages").isArray())
+                .andExpect(jsonPath("$.messages[?(@.field == 'name')].message").value("Product name must not be blank"))
+                .andExpect(jsonPath("$.messages[?(@.field == 'price')].message").value("Price must be greater than 0"))
+                .andExpect(jsonPath("$.messages[?(@.field == 'quantity')].message").value("Quantity must be at least 1"));
     }
 }
