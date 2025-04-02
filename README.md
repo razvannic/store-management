@@ -1,10 +1,8 @@
 # 🛒 Store Management Microservice
 
-A clean-architecture-based backend microservice built with **Java 17**, **Spring Boot**, **JWT security**, and *
-*TDD-first** development practices.
+A clean-architecture-based backend microservice built with **Java 17**, **Spring Boot**, **JWT security**, and **TDD-first** development practices.
 
-This service manages products in a store and includes basic authentication with role-based access control. It is
-designed using Onion Architecture for high modularity and testability.
+This service manages products in a store and includes basic authentication with role-based access control. It is designed using Onion Architecture for high modularity and testability.
 
 ---
 
@@ -12,16 +10,20 @@ designed using Onion Architecture for high modularity and testability.
 
 | Feature                        | Status | Notes                                      |
 |--------------------------------|--------|--------------------------------------------|
-| Product entity & service       | ✅      | Built using TDD, tested with JUnit 5       |
-| Onion architecture             | ✅      | Separate domain, application, infra layers |
-| H2 local dev DB                | ✅      | Runs in-memory with no setup required      |
-| JWT authentication             | ✅      | Stateless, secure tokens via `jjwt`        |
-| Role-based access control      | ✅      | `ROLE_ADMIN` and `ROLE_USER` supported     |
-| Token-based login endpoint     | ✅      | `/auth/login` issues JWTs                  |
-| Full CRUD with auth protection | ✅      | `POST`, `GET`, `PUT`, `DELETE`             |
-| Product unit tests             | ✅      | Covers all public methods                  |
-| Authentication unit tests      | ✅      | Covers authentication methods              |
-| Integration unit tests         | ✅      | Covers product creation and authentication |
+| Product entity & service       | ✅     | Built using TDD, tested with JUnit 5       |
+| Onion architecture             | ✅     | Separate domain, application, infra layers |
+| H2 local dev DB                | ✅     | Runs in-memory with no setup required      |
+| JWT authentication             | ✅     | Stateless, secure tokens via `jjwt`        |
+| Role-based access control      | ✅     | `ROLE_ADMIN` and `ROLE_USER` supported     |
+| Token-based login endpoint     | ✅     | `/auth/login` issues JWTs                  |
+| Full CRUD with auth protection | ✅     | `POST`, `GET`, `PUT`, `DELETE`             |
+| Product unit tests             | ✅     | Covers all public methods                  |
+| Authentication unit tests      | ✅     | Covers authentication methods              |
+| Integration unit tests         | ✅     | Covers product creation and authentication |
+| Input validation with Jakarta  | ✅     | `@NotBlank`, `@Min`, etc. on DTO fields    |
+| Global exception handling      | ✅     | Custom `@ControllerAdvice` implementation  |
+| Configurable token expiration  | ✅     | via `application.properties`               |
+| Caching with Spring & Caffeine | ✅     | `findById`, `update`, `delete` optimized   |
 
 ---
 
@@ -48,8 +50,10 @@ infrastructure.persistence  --> JPA entities and adapters
 - Maven
 - H2 database (dev profile)
 - JWT (JJWT 0.11.5)
+- Jakarta Validation
 - Lombok
 - JUnit 5 + Mockito
+- Spring Cache with Caffeine
 
 ---
 
@@ -58,7 +62,7 @@ infrastructure.persistence  --> JPA entities and adapters
 ### 🔹 Summary
 
 - Bootstrapped with Maven & Java 17
-- Created `ProductDto`, `Product`, and `ProductEntity`
+- Created `ProductRequestDto`, `ProductResponseDto`, `Product`, and `ProductEntity`
 - Used TDD to implement and verify service methods
 
 ### ✅ Covered Service Methods
@@ -82,6 +86,7 @@ infrastructure.persistence  --> JPA entities and adapters
 - Secured endpoints require valid roles:
     - `ROLE_ADMIN` → full access
     - `ROLE_USER` → read-only
+- Expiration configured in `application.properties` as `jwt.expiration=3600000`
 
 ### 🧪 Login Example
 
@@ -107,50 +112,11 @@ Returns:
 
 ---
 
-## ✅ Authentication Tests
-
-### 🔬 JwtUtilTest
-
-```java
-
-@Test
-void shouldGenerateAndValidateAdminToken() {
-  final var token = jwtUtil.generateToken("adminUser", "ROLE_ADMIN");
-
-  assertTrue(jwtUtil.validateToken(token));
-
-  final var claims = jwtUtil.extractClaims(token);
-  assertEquals("adminUser", claims.getSubject());
-  assertEquals("ROLE_ADMIN", claims.get("role"));
-}
-```
-
-### 🔬 AuthControllerTest
-
-```java
-
-@Test
-void shouldReturnTokenForValidAdminLogin() throws Exception {
-  mockMvc.perform(post("/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("""
-                              { "username": "admin", "password": "admin" }
-                          """))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.accessToken").value("mocked-token"))
-          .andExpect(jsonPath("$.tokenType").value("Bearer"))
-          .andExpect(jsonPath("$.expiresIn").value(3600L));
-}
-```
-
----
-
 ## 🔁 Integration Testing
 
 ### 🔬 ProductIntegrationTest
 
 ```java
-
 @Test
 void shouldCreateProductAsAdmin() throws Exception {
   final var token = getAuthToken("admin", "admin");
@@ -175,6 +141,89 @@ void shouldCreateProductAsAdmin() throws Exception {
 
 ---
 
+## ❗ Global Exception Handling
+
+- Implemented via `@ControllerAdvice`
+- Returns structured JSON error for:
+    - `ProductNotFoundException` → 404
+    - `MethodArgumentNotValidException` → 400
+    - Unhandled exceptions → 500
+
+Sample 404 response:
+
+```json
+{
+  "status": 404,
+  "error": "Not Found",
+  "message": "Product with id 999 was not found."
+}
+```
+
+---
+
+## 🧹 Input Validation
+
+Validation added using `jakarta.validation.constraints` in `ProductRequestDto`.
+
+```java
+public record ProductRequestDto(
+    @NotBlank(message = "Product name must not be blank")
+    String name,
+
+    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
+    double price,
+
+    @Min(value = 1, message = "Quantity must be at least 1")
+    int quantity
+) {}
+```
+
+On error:
+
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "messages": [
+    { "field": "price", "message": "Price must be greater than 0" },
+    ...
+  ]
+}
+```
+
+---
+
+## ⚡ Caching with Caffeine
+
+Enabled caching for:
+
+- `findById()` → returns cached product
+- `updateProduct()` → manually updates cache
+- `deleteProduct()` → evicts from cache
+
+Cache config:
+
+```properties
+spring.cache.type=caffeine
+spring.cache.cache-names=product,products
+spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=10s
+```
+
+Tested via `ProductServiceCachingTest`:
+
+```java
+@Test
+void shouldUseCacheInFindById() {
+  Product saved = productRepository.save(new Product(null, "Monitor", 150.0, 5));
+  Product first = productService.findById(saved.getId());
+  productRepository.deleteById(saved.getId());
+  Product second = productService.findById(saved.getId());
+  assertEquals("Monitor", second.getName()); // from cache
+}
+```
+
+---
+
 ## ⚙️ Configuration: application.properties
 
 ```properties
@@ -185,8 +234,15 @@ spring.datasource.username=sa
 spring.datasource.password=
 spring.jpa.hibernate.ddl-auto=update
 spring.h2.console.enabled=true
-# JWT Secret
+
+# JWT
 jwt.secret=kdiRmEFAxj2fnVqtu9nqx7BQox3Jr2VyNTOccDFRAK8=
+jwt.expiration=3600000
+
+# Caching
+spring.cache.type=caffeine
+spring.cache.cache-names=product,products
+spring.cache.caffeine.spec=maximumSize=100,expireAfterWrite=10s
 ```
 
 ---
@@ -205,5 +261,5 @@ SPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run
 
 ## 📬 Contact
 
-Built by Razvan Nicolae as part of a backend technical assignment.  
+Built by **Razvan Nicolae** as part of a backend technical assignment.  
 Feedback welcome!
