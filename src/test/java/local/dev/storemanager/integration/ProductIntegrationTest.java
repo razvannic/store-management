@@ -1,20 +1,21 @@
 package local.dev.storemanager.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import local.dev.storemanager.infrastructure.persistence.ProductJpaRepository;
+import local.dev.storemanager.infrastructure.persistence.entity.AppUser;
+import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
+import local.dev.storemanager.infrastructure.persistence.jparepository.UserJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -29,11 +30,21 @@ class ProductIntegrationTest {
     @Autowired
     private ProductJpaRepository productJpaRepository;
 
+    @Autowired
+    private UserJpaRepository userJpaRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void cleanDatabase() {
         productJpaRepository.deleteAll();
+        userJpaRepository.deleteAll();
+
+        userJpaRepository.save(new AppUser(null, "admin", passwordEncoder.encode("admin"), "ROLE_ADMIN"));
+        userJpaRepository.save(new AppUser(null, "user", passwordEncoder.encode("user"), "ROLE_USER"));
     }
 
     private String getAuthToken(String username, String password) throws Exception {

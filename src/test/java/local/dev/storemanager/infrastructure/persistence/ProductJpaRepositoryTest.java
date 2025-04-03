@@ -1,13 +1,12 @@
 package local.dev.storemanager.infrastructure.persistence;
 
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
+import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
