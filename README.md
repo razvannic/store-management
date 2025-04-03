@@ -267,12 +267,35 @@ createdb storedb
 
 Check it works:
 ```sql
-psql storedb
+psql store_db
 ```
 
 Then run a sample query:
 ```sql
 \dt       -- see tables
+
+-- Create user
+CREATE USER store_user WITH PASSWORD 'store_pass';
+
+-- Create database
+CREATE DATABASE store_db OWNER store_user;
+
+-- Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE store_db TO store_user;
+
+\c store_db store_user
+
+CREATE TABLE users (
+ id SERIAL PRIMARY KEY,
+ username VARCHAR(50) NOT NULL UNIQUE,
+ password VARCHAR(255) NOT NULL,
+ role VARCHAR(20) NOT NULL
+);
+
+INSERT INTO users (username, password, role) VALUES
+                                               ('admin', '$2a$10$9rd8UwWOqE1OGk3THNmlouOeNlf41sScbrpsKwEtEz/OL6AcZrBry', 'ROLE_ADMIN'),
+                                               ('user',  '$2a$10$vVQBCU7JSWLE6whk88AyQ.wTEtnEeSsZr9DP5zhN6WVXJ3R5ljGv.', 'ROLE_USER');
+
 SELECT * FROM products;
 ```
 
@@ -294,8 +317,8 @@ spring.profiles.active=postgres
 ## 🚀 How to Run
 
 ```bash
-# with default profile: uses H2
-./mvnw spring-boot:run
+# with H2 profile
+SPRING_PROFILES_ACTIVE=h2 ./mvnw spring-boot:run
 
 # With Postgres
 SPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run

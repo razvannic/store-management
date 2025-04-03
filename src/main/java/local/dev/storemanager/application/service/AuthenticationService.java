@@ -1,18 +1,37 @@
 package local.dev.storemanager.application.service;
 
+import local.dev.storemanager.application.dto.LoginRequestDto;
+import local.dev.storemanager.application.dto.LoginResponseDto;
+import local.dev.storemanager.application.security.JwtUtil;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import static local.dev.storemanager.domain.model.UserRoles.ADMIN;
-import static local.dev.storemanager.domain.model.UserRoles.USER;
+import local.dev.storemanager.infrastructure.persistence.jparepository.UserJpaRepository;
 
 @Service
 public class AuthenticationService {
 
-    public String resolveRole(String username, String password) {
-        return switch (username) {
-            case "admin" -> password.equals("admin") ? ADMIN : null;
-            case "user" -> password.equals("user") ? USER : null;
-            default -> null;
-        };
+    private final UserJpaRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthenticationService(UserJpaRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public LoginResponseDto authenticate(LoginRequestDto request) {
+        var user = userRepository.findByUsernameIgnoreCase(request.username())
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+
+        // using encoder as not using Spring Security login yet
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
+
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+        return new LoginResponseDto(token, "Bearer", jwtUtil.getExpirationMillis());
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -15,6 +16,11 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+        return handleExceptionAndLog(ex.getReason(), HttpStatus.valueOf(ex.getStatusCode().value()));
+    }
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleProductNotFound(ProductNotFoundException ex) {

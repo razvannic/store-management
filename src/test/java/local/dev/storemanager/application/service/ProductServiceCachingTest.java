@@ -4,7 +4,7 @@ import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import local.dev.storemanager.domain.service.ProductService;
-import local.dev.storemanager.infrastructure.persistence.ProductJpaRepository;
+import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
