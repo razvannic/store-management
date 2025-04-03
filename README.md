@@ -228,7 +228,7 @@ void shouldUseCacheInFindById() {
 
 ```properties
 # H2 DB
-spring.datasource.url=jdbc:h2:mem:storedb
+spring.datasource.url=jdbc:h2:mem:store_db
 spring.datasource.driver-class-name=org.h2.Driver
 spring.datasource.username=sa
 spring.datasource.password=
@@ -262,7 +262,7 @@ brew services start postgresql
 
 Create the DB:
 ```sql
-createdb storedb
+createdb store_db
 ```
 
 Check it works:
@@ -301,7 +301,7 @@ SELECT * FROM products;
 
 In the application-postgres.properties:
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/storedb
+spring.datasource.url=jdbc:postgresql://localhost:5432/store_db
 spring.datasource.username=your_user
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=org.postgresql.Driver

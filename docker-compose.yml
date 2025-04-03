@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: store-postgres
+    environment:
+      POSTGRES_DB: store_db
+      POSTGRES_USER: store_user
+      POSTGRES_PASSWORD: store_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - store-network
+
+  app:
+    build: .
+    container_name: store-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/store_db
+      SPRING_DATASOURCE_USERNAME: store_user
+      SPRING_DATASOURCE_PASSWORD: store_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8099:8099"
+    depends_on:
+      - postgres
+    networks:
+      - store-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - store-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - store-network
+
+volumes:
+  postgres-data:
+
+networks:
+  store-network:
