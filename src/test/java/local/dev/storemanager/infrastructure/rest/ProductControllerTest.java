@@ -8,6 +8,7 @@ import local.dev.storemanager.domain.model.Product;
 import local.dev.storemanager.domain.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +63,7 @@ class ProductControllerTest {
     @TestConfiguration
     static class TestConfig {
         @Bean
+        @Qualifier("productServiceImpl") // replace with productServiceCacheableImpl if switch to cacheable needed
         public ProductService productService() {
             return mock(ProductService.class);
         }
