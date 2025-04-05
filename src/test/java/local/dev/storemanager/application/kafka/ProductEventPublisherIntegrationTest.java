@@ -1,6 +1,7 @@
 package local.dev.storemanager.application.kafka;
 
 import local.dev.storemanager.application.event.ProductEvent;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.*;
@@ -14,6 +15,8 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.UUID;
 
@@ -22,7 +25,9 @@ import static local.dev.storemanager.constants.EventTypes.PRODUCT_CREATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @EmbeddedKafka(partitions = 1, topics = PRODUCTS_TOPIC)
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
 class ProductEventPublisherIntegrationTest {
 
     @Autowired(required = false)
