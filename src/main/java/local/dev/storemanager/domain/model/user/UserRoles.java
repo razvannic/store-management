@@ -1,4 +1,4 @@
-package local.dev.storemanager.domain.model;
+package local.dev.storemanager.domain.model.user;
 
 public final class UserRoles {
     public static final String ADMIN = "ROLE_ADMIN";

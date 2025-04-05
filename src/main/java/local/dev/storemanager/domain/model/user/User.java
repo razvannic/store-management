@@ -1,4 +1,4 @@
-package local.dev.storemanager.domain.model;
+package local.dev.storemanager.domain.model.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

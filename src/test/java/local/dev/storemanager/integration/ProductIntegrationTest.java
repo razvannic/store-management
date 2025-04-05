@@ -1,6 +1,9 @@
 package local.dev.storemanager.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import local.dev.storemanager.domain.model.product.Book;
+import local.dev.storemanager.domain.model.product.Electronics;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import local.dev.storemanager.infrastructure.persistence.entity.AppUser;
 import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
@@ -10,10 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
@@ -23,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@EmbeddedKafka(partitions = 1, topics = { "products" })
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
+@EmbeddedKafka(partitions = 1, topics = {"products"})
 class ProductIntegrationTest {
 
     @Autowired
@@ -77,34 +83,65 @@ class ProductIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                     {
-                                        "name": "Keyboard",
-                                        "price": 49.99,
-                                        "quantity": 20
+                                        "name": "Java in Action",
+                                        "price": 39.99,
+                                        "quantity": 10,
+                                        "type": "Book",
+                                        "author": "Raoul-Gabriel Urma",
+                                        "genre": "Programming"
                                     }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Keyboard"));
+                .andExpect(jsonPath("$.name").value("Java in Action"))
+                .andExpect(jsonPath("$.type").value("Book"))
+                .andExpect(jsonPath("$.typeDetails.author").value("Raoul-Gabriel Urma"))
+                .andExpect(jsonPath("$.typeDetails.genre").value("Programming"));
     }
 
     @Test
     void shouldGetAllProductsAsUser() throws Exception {
-        productJpaRepository.save(new ProductEntity(null, "Notebook", 4.5, 15));
-        productJpaRepository.save(new ProductEntity(null, "Pen", 1.5, 100));
+        productJpaRepository.save(new ProductEntity(null, "Surface Pro", 1199.0, 5, null));
+        productJpaRepository.save(new ProductEntity(null, "Logitech MX", 89.0, 30, null));
+        productJpaRepository.save(
+                new ProductEntity(null, "Surface Pro", 1199.0, 5,
+                        new Electronics("Microsoft", "1 year"))
+        );
+        productJpaRepository.save(
+                new ProductEntity(null, "Logitech MX", 89.0, 30,
+                        new Electronics("Logi", "2 years"))
+        );
+
 
         final var token = getAuthToken("user", "user");
 
         mockMvc.perform(get("/products")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()", is(2)))
+                .andExpect(jsonPath("$.length()", is(4)))
                 .andExpect(jsonPath("$[0].name").exists())
                 .andExpect(jsonPath("$[1].name").exists());
     }
 
     @Test
+    void shouldFilterWhenSomeProductsHaveNullType() throws Exception {
+        productJpaRepository.save(new ProductEntity(null, "Java Book", 25.0, 5,
+                new Book("Joshua Bloch", "Programming")));
+        productJpaRepository.save(new ProductEntity(null, "Notebook", 3.0, 20, null));
+
+        final var token = getAuthToken("user", "user");
+
+        mockMvc.perform(get("/products?type=Book")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Java Book"));
+    }
+
+
+    @Test
     void shouldUpdateProductAsAdmin() throws Exception {
         final var saved = productJpaRepository.save(
-                new ProductEntity(null, "Mouse", 15.0, 10)
+                new ProductEntity(null, "Java 8", 15.0, 10, new Book("John Smith", "Programming"))
         );
 
         final var token = getAuthToken("admin", "admin");
@@ -114,21 +151,25 @@ class ProductIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                     {
-                                        "name": "Wireless Mouse",
-                                        "price": 20.0,
-                                        "quantity": 5
+                                        "name": "Modern Java",
+                                        "price": 29.99,
+                                        "quantity": 8,
+                                        "type": "Book",
+                                        "author": "Venkat Subramaniam",
+                                        "genre": "Technology"
                                     }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.name").value("Wireless Mouse"))
-                .andExpect(jsonPath("$.price").value(20.0))
-                .andExpect(jsonPath("$.quantity").value(5));
+                .andExpect(jsonPath("$.name").value("Modern Java"))
+                .andExpect(jsonPath("$.price").value(29.99))
+                .andExpect(jsonPath("$.quantity").value(8))
+                .andExpect(jsonPath("$.typeDetails.author").value("Venkat Subramaniam"))
+                .andExpect(jsonPath("$.typeDetails.genre").value("Technology"));
     }
 
     @Test
     void shouldDeleteProductAsAdmin() throws Exception {
-        final var saved = productJpaRepository.save(new ProductEntity(null, "Desk Lamp", 35.0, 8));
+        final var saved = productJpaRepository.save(new ProductEntity(null, "Desk Lamp", 35.0, 8, null));
         final var token = getAuthToken("admin", "admin");
 
         mockMvc.perform(delete("/products/" + saved.getId())

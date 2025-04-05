@@ -4,9 +4,8 @@ import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.kafka.ProductEventPublisher;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.service.product.ProductServiceImpl;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,7 +47,8 @@ class ProductServiceImplTest {
 
     @Test
     void addProduct_shouldConvertDtoAndSave() {
-        var dto = new ProductRequestDto("Laptop", 19.99, 20);
+        var dto = new ProductRequestDto("Laptop", 19.99, 20, null, null , null,
+                null, null, null, null);
         var product = Product.builder()
                 .name("Laptop")
                 .price(19.99)
@@ -70,7 +70,7 @@ class ProductServiceImplTest {
 
     @Test
     void findById_shouldReturnFromRepository_ifNotCached() {
-        final var product = new Product(1L, "Laptop", 1200.0, 5);
+        final var product = new Product(1L, "Laptop", 1200.0, 5, null);
         when(cacheManager.getCache("product")).thenReturn(cache);
         when(cache.get(1L, Product.class)).thenReturn(null);
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -83,7 +83,7 @@ class ProductServiceImplTest {
 
     @Test
     void findById_shouldReturnFromCache_ifCached() {
-        final var cached = new Product(1L, "CachedProduct", 100.0, 2);
+        final var cached = new Product(1L, "CachedProduct", 100.0, 2, null);
         when(cacheManager.getCache("product")).thenReturn(cache);
         when(cache.get(1L, Product.class)).thenReturn(cached);
 
@@ -105,8 +105,8 @@ class ProductServiceImplTest {
     @Test
     void findAll_shouldReturnFromRepository_andCache() {
         final var list = List.of(
-                new Product(1L, "One", 10.0, 1),
-                new Product(2L, "Two", 20.0, 2)
+                new Product(1L, "One", 10.0, 1, null),
+                new Product(2L, "Two", 20.0, 2, null)
         );
 
         when(cacheManager.getCache(PRODUCTS)).thenReturn(cache);
@@ -120,9 +120,30 @@ class ProductServiceImplTest {
     }
 
     @Test
+    void shouldFilterProductsWithNullType() {
+        final var productWithNullType = Product.builder()
+                .id(1L)
+                .name("Nameless")
+                .price(0.0)
+                .quantity(0)
+                .type(null)
+                .build();
+
+        when(cacheManager.getCache(PRODUCTS)).thenReturn(cache);
+        when(cache.get("all", List.class)).thenReturn(null);
+        when(productRepository.findAll()).thenReturn(List.of(productWithNullType));
+
+        final var filtered = productService.findAllFiltered("Book", null, null, null);
+
+        assertEquals(0, filtered.size(), "Expected no products to match due to null type");
+    }
+
+
+    @Test
     void updateProduct_shouldSaveAndRefreshCache() {
         final var existing = Product.builder().id(1L).name("Old").price(10.0).quantity(2).build();
-        final var dto = new ProductRequestDto("New", 99.99, 10);
+        final var dto = new ProductRequestDto("New", 99.99, 10, null, null , null,
+                null, null, null, null);
 
         when(cacheManager.getCache("product")).thenReturn(cache);
         when(cache.get(1L, Product.class)).thenReturn(null);
@@ -164,7 +185,8 @@ class ProductServiceImplTest {
         when(productRepository.save(any())).thenReturn(updated);
         when(cache.get(1L, Product.class)).thenReturn(null); // simulate cache miss
 
-        final var dto = new ProductRequestDto("Book", 15.0, 3);
+        final var dto = new ProductRequestDto("Book", 15.0, 3, null, null , null,
+                null, null, null, null);
 
         productService.updateProduct(1L, dto);
 
@@ -199,7 +221,8 @@ class ProductServiceImplTest {
         // simulating cache miss
         when(cache.get(1L, Product.class)).thenReturn(null);
 
-        final var dto = new ProductRequestDto("Book", 10.0, 3);
+        final var dto = new ProductRequestDto("Book", 10.0, 3, null, null , null,
+                null, null, null, null);
 
         productService.updateProduct(1L, dto);
 

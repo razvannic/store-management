@@ -3,7 +3,10 @@ package local.dev.storemanager.application.service.product;
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.mapper.ProductMapper;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Book;
+import local.dev.storemanager.domain.model.product.Clothing;
+import local.dev.storemanager.domain.model.product.Electronics;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import local.dev.storemanager.domain.service.ProductService;
 import org.springframework.cache.annotation.CacheEvict;
@@ -45,6 +48,35 @@ public class ProductServiceCacheableImpl implements ProductService {
     @Cacheable(PRODUCTS)
     public List<Product> findAll() {
         return productRepository.findAll();
+    }
+
+    @Override
+    public List<Product> findAllFiltered(String type, String author, String brand, String size) {
+
+        final var allProducts = productRepository.findAll();
+
+        return allProducts.stream()
+                .filter(product -> {
+                    final var productType = product.getType();
+
+                    if (type != null) {
+                        if (productType == null || !type.equalsIgnoreCase(productType.label())) {
+                            return false;
+                        }
+                    }
+
+                    if (productType instanceof Book book) {
+                        return author == null || book.author().equalsIgnoreCase(author);
+                    } else if (productType instanceof Electronics electronics) {
+                        return brand == null || electronics.brand().equalsIgnoreCase(brand);
+                    } else if (productType instanceof Clothing clothing) {
+                        return size == null || clothing.size().equalsIgnoreCase(size);
+                    }
+
+                    // Product has no type or no filter matched
+                    return type == null && author == null && brand == null && size == null;
+                })
+                .toList();
     }
 
     @Override

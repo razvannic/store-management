@@ -1,9 +1,10 @@
 package local.dev.storemanager.application.service;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import local.dev.storemanager.domain.service.ProductService;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import static local.dev.storemanager.config.CacheNames.PRODUCT;
 import static local.dev.storemanager.config.CacheNames.PRODUCTS;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @ActiveProfiles("test")
 @EmbeddedKafka(partitions = 1, topics = { "products" })
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
 class ProductServiceCachingTest {
 
     @Autowired
@@ -47,7 +50,7 @@ class ProductServiceCachingTest {
 
     @Test
     void shouldUseCacheInFindById() {
-        final var saved = productRepository.save(new Product(null, "Monitor", 150.0, 5));
+        final var saved = productRepository.save(new Product(null, "Monitor", 150.0, 5, null));
 
         // First call — hits DB and populates cache
         final var first = productService.findById(saved.getId());
@@ -64,13 +67,14 @@ class ProductServiceCachingTest {
 
     @Test
     void shouldUpdateCacheAfterUpdate() {
-        final var saved = productRepository.save(new Product(null, "Mouse", 20.0, 4));
+        final var saved = productRepository.save(new Product(null, "Mouse", 20.0, 4, null));
 
         // Load into cache
         productService.findById(saved.getId());
 
         // Update
-        final var updated = new ProductRequestDto("Wireless Mouse", 25.0, 8);
+        final var updated = new ProductRequestDto("Wireless Mouse", 25.0, 8,null, null , null,
+                null, null, null, null);
         productService.updateProduct(saved.getId(), updated);
 
         // Cached value should reflect the update
@@ -85,7 +89,7 @@ class ProductServiceCachingTest {
 
     @Test
     void shouldEvictCacheOnDelete() {
-        final var saved = productRepository.save(new Product(null, "Keyboard", 49.0, 10));
+        final var saved = productRepository.save(new Product(null, "Keyboard", 49.0, 10, null));
 
         // Load into cache
         productService.findById(saved.getId());

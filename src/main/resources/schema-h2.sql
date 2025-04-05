@@ -9,7 +9,8 @@ CREATE TABLE users
 CREATE TABLE products
 (
     id       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name     VARCHAR(255)     NOT NULL,
-    price    DOUBLE PRECISION NOT NULL,
-    quantity INT              NOT NULL
+    name     VARCHAR(100),
+    price DOUBLE,
+    quantity INT,
+    type     JSON
 );

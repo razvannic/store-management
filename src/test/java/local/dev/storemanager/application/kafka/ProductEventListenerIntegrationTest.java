@@ -1,16 +1,14 @@
 package local.dev.storemanager.application.kafka;
 
 import local.dev.storemanager.application.event.ProductEvent;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @EmbeddedKafka(partitions = 1, topics = PRODUCTS_TOPIC)
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
 class ProductEventListenerIntegrationTest {
 
     @Autowired
@@ -34,7 +34,7 @@ class ProductEventListenerIntegrationTest {
 
     @Test
     void shouldPublishToAndConsumeFromKafka() {
-        ProductEvent event = new ProductEvent(PRODUCT_CREATED, UUID.randomUUID().toString());
+        final var event = new ProductEvent(PRODUCT_CREATED, UUID.randomUUID().toString());
         kafkaTemplate.send(PRODUCTS_TOPIC, event);
 
         await()
