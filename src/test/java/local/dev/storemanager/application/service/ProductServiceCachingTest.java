@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ActiveProfiles;
 
+import static local.dev.storemanager.config.CacheNames.PRODUCT;
+import static local.dev.storemanager.config.CacheNames.PRODUCTS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,51 +39,51 @@ class ProductServiceCachingTest {
     @BeforeEach
     void cleanUp() {
         productJpaRepository.deleteAll();
-        cacheManager.getCache("product").clear();
-        cacheManager.getCache("products").clear();
+        cacheManager.getCache(PRODUCT).clear();
+        cacheManager.getCache(PRODUCTS).clear();
     }
 
     @Test
     void shouldUseCacheInFindById() {
-        Product saved = productRepository.save(new Product(null, "Monitor", 150.0, 5));
+        final var saved = productRepository.save(new Product(null, "Monitor", 150.0, 5));
 
         // First call — hits DB and populates cache
-        Product first = productService.findById(saved.getId());
+        final var first = productService.findById(saved.getId());
         assertEquals("Monitor", first.getName());
 
         // Delete from DB
         productRepository.deleteById(saved.getId());
 
         // Second call — should return cached result
-        Product second = productService.findById(saved.getId());
+        final var second = productService.findById(saved.getId());
         assertNotNull(second);
         assertEquals("Monitor", second.getName());
     }
 
     @Test
     void shouldUpdateCacheAfterUpdate() {
-        Product saved = productRepository.save(new Product(null, "Mouse", 20.0, 4));
+        final var saved = productRepository.save(new Product(null, "Mouse", 20.0, 4));
 
         // Load into cache
         productService.findById(saved.getId());
 
         // Update
-        ProductRequestDto updated = new ProductRequestDto("Wireless Mouse", 25.0, 8);
+        final var updated = new ProductRequestDto("Wireless Mouse", 25.0, 8);
         productService.updateProduct(saved.getId(), updated);
 
         // Cached value should reflect the update
-        Product fromCache = cacheManager.getCache("product").get(saved.getId(), Product.class);
+        final var fromCache = cacheManager.getCache("product").get(saved.getId(), Product.class);
         assertNotNull(fromCache);
         assertEquals("Wireless Mouse", fromCache.getName());
         assertEquals(25.0, fromCache.getPrice());
 
         // "products" cache should be cleared
-        assertNull(cacheManager.getCache("products").get("all"));
+        assertNull(cacheManager.getCache(PRODUCTS).get("all"));
     }
 
     @Test
     void shouldEvictCacheOnDelete() {
-        Product saved = productRepository.save(new Product(null, "Keyboard", 49.0, 10));
+        final var saved = productRepository.save(new Product(null, "Keyboard", 49.0, 10));
 
         // Load into cache
         productService.findById(saved.getId());
@@ -93,6 +95,6 @@ class ProductServiceCachingTest {
         assertNull(cacheManager.getCache("product").get(saved.getId(), Product.class));
 
         // Cache for list of products should also be evicted
-        assertNull(cacheManager.getCache("products").get("all"));
+        assertNull(cacheManager.getCache(PRODUCTS).get("all"));
     }
 }

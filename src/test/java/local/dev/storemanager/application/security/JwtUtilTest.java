@@ -44,14 +44,14 @@ class JwtUtilTest {
 
     @Test
     void shouldGenerateTokenWithCorrectExpirationTime() {
-        long issuedAt = System.currentTimeMillis();
-        String token = jwtUtil.generateToken("admin", "ROLE_ADMIN");
+        final var issuedAt = System.currentTimeMillis();
+        final var token = jwtUtil.generateToken("admin", "ROLE_ADMIN");
 
-        Claims claims = jwtUtil.extractClaims(token);
-        long actualExp = claims.getExpiration().getTime();
-        long expectedExp = issuedAt + expiration;
+        final var claims = jwtUtil.extractClaims(token);
+        final var actualExp = claims.getExpiration().getTime();
+        final var expectedExp = issuedAt + expiration;
 
-        long tolerance = 2000;
+        final var tolerance = 2000;
         assertTrue(Math.abs(actualExp - expectedExp) <= tolerance,
                 "Token expiration should match the configured value");
     }

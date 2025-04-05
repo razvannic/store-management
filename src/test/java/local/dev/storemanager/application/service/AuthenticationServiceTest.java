@@ -42,10 +42,10 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldAuthenticateSuccessfully() {
-        String rawPassword = "admin";
-        String encodedPassword = passwordEncoder.encode(rawPassword);
+        final var rawPassword = "admin";
+        final var encodedPassword = passwordEncoder.encode(rawPassword);
 
-        var user = AppUser.builder()
+        final var user = AppUser.builder()
                 .id(1L)
                 .username("admin")
                 .password(encodedPassword)
@@ -56,8 +56,8 @@ class AuthenticationServiceTest {
         when(jwtUtil.generateToken("admin", "ROLE_ADMIN")).thenReturn("mocked-token");
         when(jwtUtil.getExpirationMillis()).thenReturn(3600L);
 
-        LoginRequestDto request = new LoginRequestDto("admin", "admin");
-        LoginResponseDto response = authenticationService.authenticate(request);
+        final var request = new LoginRequestDto("admin", "admin");
+        final var response = authenticationService.authenticate(request);
 
         assertEquals("mocked-token", response.accessToken());
         assertEquals("Bearer", response.tokenType());
@@ -68,7 +68,7 @@ class AuthenticationServiceTest {
     void shouldThrowIfUsernameNotFound() {
         when(userRepository.findByUsernameIgnoreCase("ghost")).thenReturn(Optional.empty());
 
-        LoginRequestDto request = new LoginRequestDto("ghost", "admin");
+        final var request = new LoginRequestDto("ghost", "admin");
 
         assertThrows(UsernameNotFoundException.class, () ->
                 authenticationService.authenticate(request));
@@ -76,9 +76,9 @@ class AuthenticationServiceTest {
 
     @Test
     void shouldThrowIfPasswordDoesNotMatch() {
-        String encodedPassword = passwordEncoder.encode("admin");
+        final var encodedPassword = passwordEncoder.encode("admin");
 
-        var user = AppUser.builder()
+        final var user = AppUser.builder()
                 .id(1L)
                 .username("admin")
                 .password(encodedPassword)
@@ -87,7 +87,7 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByUsernameIgnoreCase("admin")).thenReturn(Optional.of(user));
 
-        LoginRequestDto request = new LoginRequestDto("admin", "wrong-password");
+        final var request = new LoginRequestDto("admin", "wrong-password");
 
         assertThrows(BadCredentialsException.class, () ->
                 authenticationService.authenticate(request));

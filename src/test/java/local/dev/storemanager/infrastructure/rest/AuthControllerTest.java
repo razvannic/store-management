@@ -42,7 +42,7 @@ class AuthControllerTest {
 
         @Bean
         public AuthenticationService authenticationService() {
-            AuthenticationService mock = Mockito.mock(AuthenticationService.class);
+            final var mock = Mockito.mock(AuthenticationService.class);
 
             when(mock.authenticate(new LoginRequestDto("admin", "admin")))
                     .thenReturn(new LoginResponseDto("mocked-token", "Bearer", 3600L));

@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static local.dev.storemanager.config.CacheNames.PRODUCT;
+import static local.dev.storemanager.config.CacheNames.PRODUCTS;
+
 @Service("productServiceCacheableImpl")
 public class ProductServiceCacheableImpl implements ProductService {
 
@@ -39,13 +42,13 @@ public class ProductServiceCacheableImpl implements ProductService {
     }
 
     @Override
-    @Cacheable("products")
+    @Cacheable(PRODUCTS)
     public List<Product> findAll() {
         return productRepository.findAll();
     }
 
     @Override
-    @CacheEvict(value = {"product", "products"}, allEntries = true)
+    @CacheEvict(value = {PRODUCT, PRODUCTS}, allEntries = true)
     public Product updateProduct(Long id, ProductRequestDto dto) {
         final var product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -56,7 +59,7 @@ public class ProductServiceCacheableImpl implements ProductService {
     }
 
     @Override
-    @CacheEvict(value = {"product", "products"}, allEntries = true)
+    @CacheEvict(value = {PRODUCT, PRODUCTS}, allEntries = true)
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
