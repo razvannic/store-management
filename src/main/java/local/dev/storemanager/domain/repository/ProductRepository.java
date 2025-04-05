@@ -1,6 +1,6 @@
 package local.dev.storemanager.domain.repository;
 
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
 
 import java.util.List;
 import java.util.Optional;

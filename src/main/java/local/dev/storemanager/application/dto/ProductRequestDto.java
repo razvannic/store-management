@@ -12,6 +12,13 @@ public record ProductRequestDto(
         double price,
 
         @Min(value = 1, message = "Quantity must be at least 1")
-        int quantity
+        int quantity,
+        String type,
+        String author,
+        String genre,
+        String brand,
+        String warranty,
+        String size,
+        String material
 ) {
 }

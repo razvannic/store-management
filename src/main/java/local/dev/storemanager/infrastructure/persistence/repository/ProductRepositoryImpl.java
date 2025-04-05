@@ -2,7 +2,7 @@ package local.dev.storemanager.infrastructure.persistence.repository;
 
 
 import local.dev.storemanager.application.mapper.ProductMapper;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import local.dev.storemanager.infrastructure.persistence.jparepository.ProductJpaRepository;
 import org.springframework.stereotype.Repository;

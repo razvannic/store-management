@@ -1,17 +1,21 @@
 package local.dev.storemanager.application.mapper;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.application.dto.ProductResponseDto;
+import local.dev.storemanager.domain.model.product.*;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
 class ProductMapperTest {
 
     @Autowired
@@ -19,43 +23,79 @@ class ProductMapperTest {
 
     @Test
     void shouldMapDtoToDomain() {
-        final var dto = new ProductRequestDto("Laptop", 999.99, 2);
-        final var domain = mapper.toDomain(dto);
+        var dto = new ProductRequestDto(
+                "Effective Java", 49.99, 3,
+                "Book", "Joshua Bloch", "Programming",
+                null, null, null, null
+        );
 
-        assertEquals("Laptop", domain.getName());
-        assertEquals(999.99, domain.getPrice());
-        assertEquals(2, domain.getQuantity());
+        var domain = mapper.toDomain(dto);
+
+        assertEquals("Effective Java", domain.getName());
+        assertEquals(49.99, domain.getPrice());
+        assertEquals(3, domain.getQuantity());
+
+        assertInstanceOf(Book.class, domain.getType());
+        var book = (Book) domain.getType();
+        assertEquals("Joshua Bloch", book.author());
+        assertEquals("Programming", book.genre());
     }
 
     @Test
     void shouldMapDomainToEntity() {
-        final var domain = Product.builder().id(10L).name("Tablet").price(300.0).quantity(5).build();
-        final var entity = mapper.toEntity(domain);
+        var type = new Electronics("Logitech", "2 years");
+        var domain = Product.builder()
+                .id(10L)
+                .name("Mouse")
+                .price(45.0)
+                .quantity(12)
+                .type(type)
+                .build();
+
+        var entity = mapper.toEntity(domain);
 
         assertEquals(10L, entity.getId());
-        assertEquals("Tablet", entity.getName());
-        assertEquals(300.0, entity.getPrice());
-        assertEquals(5, entity.getQuantity());
+        assertEquals("Mouse", entity.getName());
+        assertEquals(45.0, entity.getPrice());
+        assertEquals(12, entity.getQuantity());
+        assertEquals(type, entity.getType());
     }
 
     @Test
     void shouldMapEntityToDomain() {
-        final var entity = new ProductEntity(20L, "Smartphone", 800.0, 1);
-        final var domain = mapper.toDomain(entity);
+        var type = new Clothing("L", "Cotton");
+        var entity = new ProductEntity(20L, "T-Shirt", 25.0, 50, type);
+
+        var domain = mapper.toDomain(entity);
 
         assertEquals(20L, domain.getId());
-        assertEquals("Smartphone", domain.getName());
-        assertEquals(800.0, domain.getPrice());
-        assertEquals(1, domain.getQuantity());
+        assertEquals("T-Shirt", domain.getName());
+        assertEquals(25.0, domain.getPrice());
+        assertEquals(50, domain.getQuantity());
+        assertTrue(domain.getType() instanceof Clothing);
+        var clothing = (Clothing) domain.getType();
+        assertEquals("L", clothing.size());
+        assertEquals("Cotton", clothing.material());
     }
 
     @Test
     void shouldMapDomainToDto() {
-        final var domain = Product.builder().id(30L).name("Headphones").price(150.0).quantity(7).build();
-        final var dto = mapper.toResponseDto(domain);
+        var type = new Book("Martin Fowler", "Software Engineering");
+        var domain = Product.builder()
+                .id(30L)
+                .name("Refactoring")
+                .price(65.0)
+                .quantity(5)
+                .type(type)
+                .build();
 
-        assertEquals("Headphones", dto.name());
-        assertEquals(150.0, dto.price());
-        assertEquals(7, dto.quantity());
+        var dto = mapper.toResponseDto(domain);
+
+        assertEquals(30L, dto.id());
+        assertEquals("Refactoring", dto.name());
+        assertEquals(65.0, dto.price());
+        assertEquals(5, dto.quantity());
+        assertEquals("Book", dto.type());
+        assertEquals(type, dto.typeDetails());
     }
 }

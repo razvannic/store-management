@@ -1,4 +1,4 @@
-package local.dev.storemanager.domain.model;
+package local.dev.storemanager.domain.model.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,4 +14,5 @@ public class Product {
     private String name;
     private double price;
     private int quantity;
+    private ProductType type;
 }

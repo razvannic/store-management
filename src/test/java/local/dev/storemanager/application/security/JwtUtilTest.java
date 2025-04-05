@@ -1,16 +1,19 @@
 package local.dev.storemanager.application.security;
 
 import io.jsonwebtoken.Claims;
+import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = PostgresTestContainer.Initializer.class)
 class JwtUtilTest {
 
     @Autowired

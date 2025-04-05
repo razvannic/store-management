@@ -4,7 +4,7 @@ import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.service.product.ProductServiceCacheableImpl;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,8 @@ class ProductServiceCacheableImplTest {
 
     @Test
     void addProduct_shouldMapAndSave() {
-        final var dto = new ProductRequestDto("Laptop", 999.99, 3);
+        final var dto = new ProductRequestDto("Laptop", 999.99, 3, null, null , null,
+                null, null, null, null);
         final var mapped = Product.builder().name("Laptop").price(999.99).quantity(3).build();
 
         when(productMapper.toDomain(dto)).thenReturn(mapped);
@@ -68,8 +69,8 @@ class ProductServiceCacheableImplTest {
     @Test
     void findAll_shouldReturnList() {
         final var products = List.of(
-                new Product(1L, "A", 10.0, 1),
-                new Product(2L, "B", 20.0, 2)
+                new Product(1L, "A", 10.0, 1, null),
+                new Product(2L, "B", 20.0, 2, null)
         );
         when(productRepository.findAll()).thenReturn(products);
 
@@ -82,7 +83,8 @@ class ProductServiceCacheableImplTest {
     @Test
     void updateProduct_shouldModifyAndSave() {
         final var existing = Product.builder().id(1L).name("Old").price(10.0).quantity(1).build();
-        final var dto = new ProductRequestDto("New", 99.99, 9);
+        final var dto = new ProductRequestDto("New", 99.99, 9, null, null , null,
+                null, null, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(productRepository.save(existing)).thenReturn(existing);

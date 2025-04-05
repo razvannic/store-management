@@ -1,10 +1,13 @@
 package local.dev.storemanager.infrastructure.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.security.JwtRequestFilter;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Book;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,13 +53,17 @@ class ProductControllerTest {
     @Autowired
     private ProductMapper productMapper;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private Product product;
 
     @BeforeEach
     void setup() {
         reset(productService, productMapper);
         product = Product.builder().id(1L).name("Book").price(10.0).quantity(5).build();
-        final var productResponseDto = new ProductResponseDto(12L, "Book", 10.0, 5);
+        final var productResponseDto = new ProductResponseDto(12L, "Book", 10.0, 5, "Book",
+                new Book("John Doe", "Fiction"));
         when(productMapper.toResponseDto(any(Product.class))).thenReturn(productResponseDto);
     }
 
@@ -112,7 +119,8 @@ class ProductControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void shouldGetAllProducts() throws Exception {
-        when(productService.findAll()).thenReturn(List.of(product));
+        when(productService.findAllFiltered(null, null, null, null))
+                .thenReturn(List.of(product));
 
         mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
@@ -174,13 +182,13 @@ class ProductControllerTest {
 
     @Test
     void shouldReturn400ForInvalidProductInput() throws Exception {
-        String invalidPayload = """
-        {
-            "name": "  ",
-            "price": -5,
-            "quantity": 0
-        }
-    """;
+        final var invalidPayload = """
+                    {
+                        "name": "  ",
+                        "price": -5,
+                        "quantity": 0
+                    }
+                """;
 
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -197,13 +205,13 @@ class ProductControllerTest {
 
     @Test
     void shouldReturn400ForInvalidProductInputOnUpdate() throws Exception {
-        String invalidPayload = """
-        {
-            "name": "  ",
-            "price": -5,
-            "quantity": 0
-        }
-    """;
+        final var invalidPayload = """
+                    {
+                        "name": "  ",
+                        "price": -5,
+                        "quantity": 0
+                    }
+                """;
 
         when(productService.updateProduct(eq(1L), any())).thenReturn(product);
 
@@ -218,5 +226,27 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.messages[?(@.field == 'name')].message").value("Product name must not be blank"))
                 .andExpect(jsonPath("$.messages[?(@.field == 'price')].message").value("Price must be greater than 0"))
                 .andExpect(jsonPath("$.messages[?(@.field == 'quantity')].message").value("Quantity must be at least 1"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldAcceptBulkUpload() throws Exception {
+        final var products = List.of(
+                new ProductRequestDto("Effective Java", 45.0, 10,
+                        "Book", "Joshua Bloch", "Programming", null, null, null, null),
+                new ProductRequestDto("MacBook Pro", 1999.99, 5,
+                        "Electronics", null, null, "Apple", "1 year", null, null),
+                new ProductRequestDto("T-Shirt", 19.99, 100,
+                        "Clothing", null, null, null, null, "M", "Cotton")
+        );
+
+        final var json = objectMapper.writeValueAsString(products);
+
+        mockMvc.perform(post("/products/bulk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated());
+
+        verify(productService, times(3)).addProduct(org.mockito.ArgumentMatchers.any());
     }
 }

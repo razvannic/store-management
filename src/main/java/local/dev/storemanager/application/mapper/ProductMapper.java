@@ -2,7 +2,9 @@ package local.dev.storemanager.application.mapper;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.dto.ProductResponseDto;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.Product;
+import local.dev.storemanager.domain.model.product.ProductType;
+import local.dev.storemanager.domain.model.product.ProductTypeFactory;
 import local.dev.storemanager.infrastructure.persistence.entity.ProductEntity;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,7 @@ public class ProductMapper {
                 .name(dto.name())
                 .price(dto.price())
                 .quantity(dto.quantity())
+                .type(ProductTypeFactory.from(dto))
                 .build();
     }
 
@@ -23,6 +26,7 @@ public class ProductMapper {
                 .name(entity.getName())
                 .price(entity.getPrice())
                 .quantity(entity.getQuantity())
+                .type(entity.getType())
                 .build();
     }
 
@@ -32,15 +36,20 @@ public class ProductMapper {
                 .name(domain.getName())
                 .price(domain.getPrice())
                 .quantity(domain.getQuantity())
+                .type(domain.getType())
                 .build();
     }
 
-    public ProductResponseDto toResponseDto(Product domain) {
+
+    public ProductResponseDto toResponseDto(Product product) {
         return new ProductResponseDto(
-                domain.getId(),
-                domain.getName(),
-                domain.getPrice(),
-                domain.getQuantity()
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getQuantity(),
+                product.getType() != null ? product.getType().label() : null,
+                product.getType()
         );
     }
+
 }

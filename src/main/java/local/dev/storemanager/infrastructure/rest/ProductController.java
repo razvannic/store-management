@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.dto.ProductResponseDto;
 import local.dev.storemanager.application.mapper.ProductMapper;
+import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -53,9 +54,13 @@ public class ProductController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Operation(summary = "Retrieve all products", description = "Accessible by all roles")
-    public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
-        log.info("A request to retrieve al products was received");
-        final var products = productService.findAll();
+    public ResponseEntity<List<ProductResponseDto>> getAllProducts(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String size
+    ) {
+        final var products = productService.findAllFiltered(type, author, brand, size);
         return ResponseEntity.ok(products.stream().map(productMapper::toResponseDto).toList());
     }
 
@@ -76,4 +81,14 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Bulk upload products", description = "Upload multiple products via JSON")
+    public ResponseEntity<Void> uploadProducts(@RequestBody List<@Valid ProductRequestDto> products) {
+        log.info("A request to bulk add {} products was received.", products.size());
+        products.forEach(productService::addProduct);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
 }

@@ -5,7 +5,7 @@ import local.dev.storemanager.application.exception.ProductNotFoundException;
 import local.dev.storemanager.application.kafka.ProductEventPublisher;
 import local.dev.storemanager.application.event.ProductEvent;
 import local.dev.storemanager.application.mapper.ProductMapper;
-import local.dev.storemanager.domain.model.Product;
+import local.dev.storemanager.domain.model.product.*;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import local.dev.storemanager.domain.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +68,7 @@ public class ProductServiceImpl implements ProductService {
 
         if (cached != null) return cached;
 
-        Product product = productRepository.findById(id)
+        final var product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
         log.debug("Product retrieved from DB: {}", product.getId());
@@ -95,6 +95,37 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<Product> findAllFiltered(String type, String author, String brand, String size) {
+        log.info("Filtering products with type={}, author={}, brand={}, size={}", type, author, brand, size);
+
+        List<Product> allProducts = findAll();
+
+        return allProducts.stream()
+                .filter(product -> {
+                    final var productType = product.getType();
+
+                    if (type != null) {
+                        if (productType == null || !type.equalsIgnoreCase(productType.label())) {
+                            return false;
+                        }
+                    }
+
+                    if (productType instanceof Book book) {
+                        return author == null || book.author().equalsIgnoreCase(author);
+                    } else if (productType instanceof Electronics electronics) {
+                        return brand == null || electronics.brand().equalsIgnoreCase(brand);
+                    } else if (productType instanceof Clothing clothing) {
+                        return size == null || clothing.size().equalsIgnoreCase(size);
+                    }
+
+                    // Product has no type or no filter matched
+                    return type == null && author == null && brand == null && size == null;
+                })
+                .toList();
+    }
+
+
+    @Override
     public Product updateProduct(Long id, ProductRequestDto dto) {
         log.info("Updating product with ID: {}", id);
 
@@ -104,8 +135,9 @@ public class ProductServiceImpl implements ProductService {
         product.setName(dto.name());
         product.setPrice(dto.price());
         product.setQuantity(dto.quantity());
+        product.setType(ProductTypeFactory.from(dto));
 
-        Product saved = productRepository.save(product);
+        final var saved = productRepository.save(product);
         log.debug("Product updated: {}", saved.getId());
 
         getCache(PRODUCT).put(id, saved);

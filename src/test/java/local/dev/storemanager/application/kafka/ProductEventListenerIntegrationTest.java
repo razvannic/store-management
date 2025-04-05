@@ -34,7 +34,7 @@ class ProductEventListenerIntegrationTest {
 
     @Test
     void shouldPublishToAndConsumeFromKafka() {
-        ProductEvent event = new ProductEvent(PRODUCT_CREATED, UUID.randomUUID().toString());
+        final var event = new ProductEvent(PRODUCT_CREATED, UUID.randomUUID().toString());
         kafkaTemplate.send(PRODUCTS_TOPIC, event);
 
         await()
