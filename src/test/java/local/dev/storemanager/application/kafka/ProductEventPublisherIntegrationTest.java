@@ -1,5 +1,6 @@
 package local.dev.storemanager.application.kafka;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import local.dev.storemanager.application.event.ProductEvent;
 import local.dev.storemanager.infrastructure.persistence.config.PostgresTestContainer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -49,7 +50,8 @@ class ProductEventPublisherIntegrationTest {
         );
         kafkaTemplate.setDefaultTopic(PRODUCTS_TOPIC);
 
-        publisher = new ProductEventPublisher(kafkaTemplate);
+        var meterRegistry = new SimpleMeterRegistry();
+        publisher = new ProductEventPublisher(kafkaTemplate, meterRegistry);
 
         final var consumerProps = KafkaTestUtils.consumerProps("testGroup", "true", embeddedKafka);
         consumerProps.put("auto.offset.reset", "earliest");
