@@ -34,7 +34,7 @@ class ProductRepositoryImplTest {
         productRepository.save(Product.builder().name("Pencil").price(1.0).quantity(100).build());
         productRepository.save(Product.builder().name("Eraser").price(0.5).quantity(50).build());
 
-        List<Product> products = productRepository.findAll();
+        final var products = productRepository.findAll();
         assertTrue(products.size() >= 2);
     }
 
