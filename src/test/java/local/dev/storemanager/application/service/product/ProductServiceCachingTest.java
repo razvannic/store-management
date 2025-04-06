@@ -1,4 +1,4 @@
-package local.dev.storemanager.application.service;
+package local.dev.storemanager.application.service.product;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.domain.model.product.Product;

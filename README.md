@@ -65,6 +65,7 @@ The Onion Architecture separates code into concentric layers:
 | Kafka Integration                      | ✅      | Publishes product events like CREATED, UPDATED          |
 | Embedded Kafka Integration Test        | ✅      | Publishes and consumes events with real broker          |
 | Bulk product import via JSON file      | ✅      | Multipart `/products/import` endpoint                   |
+| Multi-threaded bulk import             | ✅      | Parallel batches with configurable size                 |
 | Prometheus Metrics + Micrometer        | ✅      | Exposes `product_events_published_total{...}` counter   |
 | Swagger / OpenAPI documentation        | ✅      | Auto-generated API docs via springdoc-openapi           |
 | Postman collection                     | ✅      | Available in project root `/postman/`                   |
@@ -420,6 +421,62 @@ file: products.json
 
 ---
 
+## 📥 Bulk Product Import (JSON Upload)
+
+The application supports uploading thousands of products using a JSON file.
+
+### 🔹 Endpoint
+`POST /products/bulk/import`
+- Accepts `multipart/form-data`
+- File must be valid JSON array of product objects
+- Accepts query param `mode=SINGLE_THREADED|MULTI_THREADED`
+
+### 🔹 Processing Modes
+- **SINGLE_THREADED**: sequential processing
+- **MULTI_THREADED**: uses a thread pool and splits input into batches
+- Batch size is configurable via:
+
+### 🔹 Performance Comparison (for 2000 products per file)
+| Mode             | Products | Duration (ms) |
+|------------------|----------|---------------|
+| SINGLE_THREADED  | 2000     | 3354          |
+| MULTI_THREADED   | 2000     | 1317          |
+
+> 💡 Multi-threaded import improves performance significantly when dealing with large files.
+
+```properties
+import.bulk.batch-size=100
+```
+
+### 🔹 Sample JSON File
+```json
+[
+  {
+    "name": "Monitor",
+    "price": 129.99,
+    "quantity": 10,
+    "type": "Electronics",
+    "brand": "LG",
+    "warranty": "2 years"
+  },
+  {
+    "name": "Clean Code",
+    "price": 39.99,
+    "quantity": 5,
+    "type": "Book",
+    "author": "Robert C. Martin",
+    "genre": "Software"
+  }
+]
+```
+
+### 🧪 Testing Strategy
+- **Integration unit tests** use real DB and Kafka to verify full processing and cover both single and multi-threaded logic
+- Postman collections provided for real-world testing of large imports (500–2000+ products)
+- Product files found in /postman/bulk-products (should be dropped in postman form-data body)
+
+---
+
 ## 📊 Metrics with Micrometer & Prometheus
 
 The application includes Micrometer-based metrics to track Kafka publishing activity.
@@ -632,16 +689,22 @@ A complete **Postman collection** is included in the project to test endpoints q
 **Path**: `postman/store-manager.postman_collection.json`
 
 ### ☑️ Collection Includes:
+
 - Auth request with login
 - Protected product CRUD requests with bearer token
 - Import product JSON
 - Invalid input tests
 
 ### ❇ Tip:
+
 Use environment variables in Postman to store the JWT:
 
 ```json
-{{{{product_token}}}}
+{{{{
+  product_token
+}}
+}
+}
 ```
 
 Import the collection via Postman UI > *Import* > *File Upload*.
