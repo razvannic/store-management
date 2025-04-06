@@ -127,6 +127,59 @@
 			"response": []
 		},
 		{
+			"name": "import products bulk",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{product_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/rnicolae/Documents/Projects/store-manager/postman/bulk-products/products-2000.json"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8099/products/bulk/import?mode=MULTI_THREADED",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8099",
+					"path": [
+						"products",
+						"bulk",
+						"import"
+					],
+					"query": [
+						{
+							"key": "mode",
+							"value": "MULTI_THREADED"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "get all products",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true

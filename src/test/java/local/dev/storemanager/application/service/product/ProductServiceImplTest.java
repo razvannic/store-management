@@ -1,9 +1,8 @@
-package local.dev.storemanager.application.service;
+package local.dev.storemanager.application.service.product;
 
 import local.dev.storemanager.application.dto.ProductRequestDto;
 import local.dev.storemanager.application.kafka.ProductEventPublisher;
 import local.dev.storemanager.application.mapper.ProductMapper;
-import local.dev.storemanager.application.service.product.ProductServiceImpl;
 import local.dev.storemanager.domain.model.product.Product;
 import local.dev.storemanager.domain.repository.ProductRepository;
 import org.junit.jupiter.api.Test;

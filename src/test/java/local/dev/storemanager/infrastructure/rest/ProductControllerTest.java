@@ -8,6 +8,7 @@ import local.dev.storemanager.application.mapper.ProductMapper;
 import local.dev.storemanager.application.security.JwtRequestFilter;
 import local.dev.storemanager.domain.model.product.Book;
 import local.dev.storemanager.domain.model.product.Product;
+import local.dev.storemanager.domain.service.ProductBulkImportService;
 import local.dev.storemanager.domain.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -51,6 +53,9 @@ class ProductControllerTest {
     private ProductService productService;
 
     @Autowired
+    private ProductBulkImportService bulkImportService;
+
+    @Autowired
     private ProductMapper productMapper;
 
     @Autowired
@@ -60,7 +65,7 @@ class ProductControllerTest {
 
     @BeforeEach
     void setup() {
-        reset(productService, productMapper);
+        reset(productService, bulkImportService, productMapper);
         product = Product.builder().id(1L).name("Book").price(10.0).quantity(5).build();
         final var productResponseDto = new ProductResponseDto(12L, "Book", 10.0, 5, "Book",
                 new Book("John Doe", "Fiction"));
@@ -73,6 +78,11 @@ class ProductControllerTest {
         @Qualifier("productServiceImpl") // replace with productServiceCacheableImpl if switch to cacheable needed
         public ProductService productService() {
             return mock(ProductService.class);
+        }
+
+        @Bean(name = "productBulkImportServiceImpl")
+        public ProductBulkImportService productBulkImportService() {
+            return mock(ProductBulkImportService.class);
         }
 
         @Bean
@@ -249,4 +259,31 @@ class ProductControllerTest {
 
         verify(productService, times(3)).addProduct(org.mockito.ArgumentMatchers.any());
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldImportProductsFromJsonFile() throws Exception {
+        final var products = List.of(
+                new ProductRequestDto("Effective Java", 45.0, 10,
+                        "Book", "Joshua Bloch", "Programming", null, null, null, null),
+                new ProductRequestDto("MacBook Pro", 1999.99, 5,
+                        "Electronics", null, null, "Apple", "1 year", null, null)
+        );
+
+        final var json = objectMapper.writeValueAsBytes(products);
+        final var file = new MockMultipartFile("file", "products.json", "application/json", json);
+
+        when(bulkImportService.importFromJson(any(), any()))
+                .thenReturn(new local.dev.storemanager.application.dto.BulkImportResponse(
+                        2, 2, 0, 200
+                ));
+
+        mockMvc.perform(multipart("/products/bulk/import")
+                        .file(file)
+                        .param("mode", "MULTI_THREADED"))
+                .andExpect(status().isOk());
+
+        verify(bulkImportService).importFromJson(any(), eq(local.dev.storemanager.domain.model.product.ImportMode.MULTI_THREADED));
+    }
+
 }
